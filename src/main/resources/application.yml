@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: IotDataProcessingSystem
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/iotdb
+    username: postgres
+    password: 1006
+    driver-class-name: org.postgresql.Driver
+  influxdb:
+    url: http://localhost:8086
+    database: equipments
+    retention-policy: autogen
+
+server:
+  port: 8081

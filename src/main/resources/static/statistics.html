@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>状态监测</title>
+    <link rel="stylesheet" href="js/element/index.js">
+    <script src="js/vue.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/element/index.js"></script>
+    <script src="js/echarts.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 查询表单 -->
+    <div class="query-form">
+        <el-form :inline="true" :model="queryParams" @submit.prevent="manualFetch">
+            <el-form-item label="设备ID">
+                <el-input v-model="queryParams.equipmentId" placeholder="请输入设备ID"></el-input>
+            </el-form-item>
+            <el-form-item label="时间范围">
+                <el-date-picker
+                        v-model="dateRange"
+                        type="datetimerange"
+                        :picker-options="pickerOptions"
+                        range-separator="至"
+                        start-placeholder="开始时间"
+                        end-placeholder="结束时间"
+                        format="yyyy-MM-dd HH:mm:ss"
+                        value-format="yyyy-MM-ddTHH:mm:ss"
+                ></el-date-picker>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="manualFetch">查询</el-button>
+                <el-button @click="toggleAutoUpdate" :type="autoUpdate ? 'success' : 'info'">
+                    {{ autoUpdate ? '停止实时' : '启动实时' }}
+                </el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+
+    <!-- 图表容器 -->
+    <div class="chart-container">
+        <div class="chart-item" ref="temperatureChart" style="width: 100%; height: 400px;"></div>
+        <div class="chart-item" ref="pressureChart" style="width: 100%; height: 400px;"></div>
+        <div class="chart-item" ref="vibrationChart" style="width: 100%; height: 400px;"></div>
+        <div class="chart-item" ref="humidityChart" style="width: 100%; height: 400px;"></div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                queryParams: {
+                    equipmentId: 'sensor_0',
+                    startTime: '',
+                    endTime: ''
+                },
+                dateRange: [],
+                charts: {},
+                pickerOptions: {
+                    shortcuts: [{
+                        text: '最近24小时',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+                autoUpdate: true,
+                pollingTimer: null
+            }
+        },
+        mounted() {
+            this.initCharts();
+            this.startAutoUpdate();
+        },
+        beforeDestroy() {
+            this.stopAutoUpdate();
+        },
+        methods: {
+            initCharts() {
+                const chartNames = ['temperature', 'pressure', 'vibration', 'humidity'];
+                chartNames.forEach(name => {
+                    this.$nextTick(() => {
+                        this.charts[name] = echarts.init(this.$refs[`${name}Chart`]);
+                        this.charts[name].setOption({
+                            title: { text: this.getChartTitle(name) },
+                            tooltip: { trigger: 'axis' },
+                            xAxis: { type: 'time', name: '时间' },
+                            yAxis: { type: 'value', name: this.getAxisName(name) },
+                            series: [{ type: 'line', data: [], showSymbol: false }]
+                        });
+                    });
+                });
+            },
+            getChartTitle(name) {
+                return {
+                    temperature: '温度趋势',
+                    pressure: '压力趋势',
+                    vibration: '振动趋势',
+                    humidity: '湿度趋势'
+                }[name];
+            },
+            getAxisName(name) {
+                return {
+                    temperature: '℃',
+                    pressure: 'kPa',
+                    vibration: 'mm/s',
+                    humidity: '%'
+                }[name];
+            },
+            formatDate(date) {
+                return date.toISOString().replace('Z', '');
+            },
+            async fetchData() {
+                // 实时更新模式：自动设置时间范围为最近24小时
+                if (this.autoUpdate) {
+                    const now = new Date();
+                    const start = new Date(now.getTime() - 24 * 3600 * 1000);
+                    this.dateRange = [this.formatDate(start), this.formatDate(now)];
+                }
+
+                if (!this.dateRange || this.dateRange.length !== 2) {
+                    this.$message.warning('请选择完整的时间范围');
+                    return;
+                }
+
+                this.queryParams.startTime = this.dateRange[0];
+                this.queryParams.endTime = this.dateRange[1];
+
+                try {
+                    const response = await axios.get(`http://localhost:8081/api/equipment/${this.queryParams.equipmentId}`, {
+                        params: {
+                            startTime: this.queryParams.startTime,
+                            endTime: this.queryParams.endTime
+                        }
+                    });
+
+                    const data = response.data.data;
+                    if (!data.length) {
+                        this.$message.warning('未查询到相关数据');
+                        return;
+                    }
+
+                    // 处理数据
+                    const seriesData = {
+                        temperature: [],
+                        pressure: [],
+                        vibration: [],
+                        humidity: []
+                    };
+
+                    data.forEach(item => {
+                        const timestamp = new Date(item.timestamp).getTime();
+                        seriesData.temperature.push([timestamp, item.temperature]);
+                        seriesData.pressure.push([timestamp, item.pressure]);
+                        seriesData.vibration.push([timestamp, item.vibration]);
+                        seriesData.humidity.push([timestamp, item.humidity]);
+                    });
+
+                    // 更新图表
+                    Object.keys(this.charts).forEach(key => {
+                        this.charts[key].setOption({
+                            series: [{ data: seriesData[key] }]
+                        });
+                    });
+
+                } catch (error) {
+                    this.$message.error('数据获取失败: ' + error.message);
+                }
+            },
+            startAutoUpdate() {
+                this.autoUpdate = true;
+                this.stopAutoUpdate(); // 防止重复启动
+                this.pollingTimer = setInterval(() => {
+                    this.fetchData();
+                }, 30000);
+                this.fetchData(); // 立即获取一次数据
+            },
+            stopAutoUpdate() {
+                this.autoUpdate = false;
+                if (this.pollingTimer) {
+                    clearInterval(this.pollingTimer);
+                    this.pollingTimer = null;
+                }
+            },
+            toggleAutoUpdate() {
+                if (this.autoUpdate) {
+                    this.stopAutoUpdate();
+                } else {
+                    this.startAutoUpdate();
+                }
+            },
+            manualFetch() {
+                this.stopAutoUpdate();
+                this.fetchData();
+            }
+        }
+    });
+</script>
+
+<style>
+    .query-form {
+        margin: 20px 0;
+        padding: 20px;
+        background-color: #f5f7fa;
+    }
+
+    .chart-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .chart-item {
+        border: 1px solid #ebeef5;
+        border-radius: 4px;
+        padding: 20px;
+    }
+</style>
