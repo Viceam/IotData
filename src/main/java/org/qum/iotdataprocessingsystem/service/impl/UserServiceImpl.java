@@ -71,4 +71,9 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+
+    @Override
+    public String getLocationByUsername(String username) {
+        return userMapper.getLocationByUsername(username);
+    }
 }

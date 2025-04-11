@@ -10,4 +10,6 @@ public interface UserService {
     boolean login(UserLoginDto userLoginDto);
 
     boolean update(User user);
+
+    String getLocationByUsername(String username);
 }

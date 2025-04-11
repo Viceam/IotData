@@ -16,4 +16,7 @@ public interface UserMapper {
 
     @Update("UPDATE users SET password = #{password}, location = #{location} WHERE username = #{username}")
     int updateUserByUsername(User user);
+
+    @Select("SELECT location FROM users WHERE username = #{username}")
+    String getLocationByUsername(String username);
 }
