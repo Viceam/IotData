@@ -1,7 +1,7 @@
 package org.qum.iotdataprocessingsystem;
 
 import org.junit.jupiter.api.Test;
-import org.qum.iotdataprocessingsystem.service.RedisService;
+import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 

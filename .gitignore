@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+**/fonts/**
+**/js/**
+**/index.css

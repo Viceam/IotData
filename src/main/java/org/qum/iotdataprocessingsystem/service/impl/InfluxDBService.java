@@ -1,4 +1,4 @@
-package org.qum.iotdataprocessingsystem.service;
+package org.qum.iotdataprocessingsystem.service.impl;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Query;
