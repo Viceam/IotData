@@ -1,7 +1,7 @@
 package org.qum.iotdataprocessingsystem.controller;
 
 import org.qum.iotdataprocessingsystem.dto.EquipmentsStatusDto;
-import org.qum.iotdataprocessingsystem.service.InfluxDBService;
+import org.qum.iotdataprocessingsystem.service.impl.InfluxDBService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

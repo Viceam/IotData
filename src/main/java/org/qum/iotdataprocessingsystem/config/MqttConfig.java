@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
-import org.qum.iotdataprocessingsystem.service.RedisService;
+import org.qum.iotdataprocessingsystem.service.FaultyRecordService;
+import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +16,6 @@ import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
-import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -37,6 +37,10 @@ public class MqttConfig {
 
     @Autowired
     RedisService redisService;
+
+    @Autowired
+    FaultyRecordService faultyRecordService;
+
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -99,7 +103,12 @@ public class MqttConfig {
                 String location = root.get("location").asText();
                 int faulty = checkFault(temperature, pressure, vibration, humidity);
                 if(faulty == 1) {
+                    LocalDateTime utc8DateTime = LocalDateTime.ofInstant(
+                            timestamp,
+                            ZoneId.of("Asia/Shanghai") // 使用上海时区（UTC+8）
+                    );
                     System.out.println(deviceId + "异常");
+                    faultyRecordService.add(deviceId, utc8DateTime);
 
                     // 1. 检查设备是否已存在于异常列表
                     boolean exists = redisService.checkAbnormal(deviceId);

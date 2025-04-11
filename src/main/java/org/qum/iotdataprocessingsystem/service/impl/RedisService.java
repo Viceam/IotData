@@ -1,4 +1,4 @@
-package org.qum.iotdataprocessingsystem.service;
+package org.qum.iotdataprocessingsystem.service.impl;
 
 import org.qum.iotdataprocessingsystem.dto.EquipmentsStatusDto;
 import org.springframework.data.redis.core.RedisTemplate;
