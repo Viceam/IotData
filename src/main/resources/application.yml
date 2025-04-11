@@ -10,6 +10,11 @@ spring:
     url: http://localhost:8086
     database: equipments
     retention-policy: autogen
+  data:
+    redis:
+      database: 0
+      port: 6379
+      host: localhost
 
 server:
   port: 8081
