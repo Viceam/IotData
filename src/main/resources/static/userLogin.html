@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>管理员登录</title>
+    <title>用户登录</title>
     <script src="js/vue.js"></script>
     <script src="js/axios.min.js"></script>
     <link rel="stylesheet" href="css/index.css">
@@ -18,7 +18,7 @@
                 <el-row>
                     <el-col :span="8" :offset="8">
                         <div id="loginBox">
-                            管理员登录<br>
+                            用户登录<br>
                             账号：<el-input v-model="admin.username" placeholder="账号"></el-input>
                             <br>
                             密码：<el-input type="password" v-model="admin.password" placeholder="密码"></el-input>
@@ -47,7 +47,7 @@
         },
         methods: {
             login: function () {
-                axios.post("/admin/login", this.admin).then((res => {
+                axios.post("/user/login", this.admin).then((res => {
                     console.log(res.data);
 
                     if (res.data.code === 200) {
