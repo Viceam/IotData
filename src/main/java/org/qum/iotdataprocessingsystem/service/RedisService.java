@@ -70,6 +70,25 @@ public class RedisService {
         redisTemplate.opsForZSet().add("abnormal_devices", equipmentId, timestamp);
     }
 
+    public List<String> getAllAbnormalDevices() {
+        Set<Object> rawDevices = redisTemplate.opsForZSet()
+                .reverseRange("abnormal_devices", 0, -1);
+
+        if (rawDevices == null) {
+            return Collections.emptyList();
+        }
+
+        // 安全类型转换
+        return rawDevices.stream()
+                .map(obj -> {
+                    if (obj instanceof String) {
+                        return (String) obj;
+                    }
+                    throw new ClassCastException("设备ID类型不匹配：" + obj.getClass());
+                })
+                .toList();
+    }
+
     public List<EquipmentsStatusDto> getAlerts() {
         List<EquipmentsStatusDto> result = new ArrayList<>();
 
