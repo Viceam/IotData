@@ -265,15 +265,13 @@
                 console.log(key, keyPath);
             },
             getName: function () {
-                axios.get("/admin").then((res => {
-                    if (res.data === "Invalid") {
-                        this.$message.error('登录失效，请重新登录');
-                        setTimeout(() => {
-                            window.location.href = "login.html";
-                        }, 500);
-                    } else {
-                        this.username = res.data;
+                const token = localStorage.getItem("auth_token");
+                axios.get("/general/username", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
                     }
+                }).then((res => {
+                    this.username = res.data.data;
                 })).catch(err => {
                     console.log(err);
                 })
@@ -301,7 +299,7 @@
             }
         },
         created() {
-            // this.getName();
+            this.getName();
             this.addAnnouncements();
         }
     });
