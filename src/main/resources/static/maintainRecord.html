@@ -37,27 +37,49 @@
                             value-format="yyyy-MM-dd HH:mm:ss">
                     </el-date-picker>
                 </el-col>
-                <el-col :span="6">
-                    <el-input
-                            placeholder="输入设备ID进行搜索"
-                            v-model="query_body.equipmentId"
-                            clearable
-                            style="width: 300px;">
-                        <template slot="append">
-                            <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
-                        </template>
-                    </el-input>
+                <!-- 组合查询区域 -->
+                <el-col :span="12">
+                    <el-row :gutter="10" type="flex" align="middle">
+                        <!-- 设备ID输入框 -->
+                        <el-col :span="9">
+                            <el-input
+                                    placeholder="输入设备ID"
+                                    v-model="query_body.equipmentId"
+                                    clearable>
+                            </el-input>
+                        </el-col>
+
+                        <!-- 操作员输入框 -->
+                        <el-col :span="9">
+                            <el-input
+                                    placeholder="输入操作员用户名"
+                                    v-model="query_body.operatorName"
+                                    clearable>
+                            </el-input>
+                        </el-col>
+
+                        <!-- 统一搜索按钮 -->
+                        <el-col :span="4">
+                            <el-button
+                                    type="primary"
+                                    icon="el-icon-search"
+                                    @click="search"
+                                    style="width: 100%; margin-left: 0;">
+                                搜索
+                            </el-button>
+                        </el-col>
+                    </el-row>
                 </el-col>
             </el-row>
 
-            <el-table :data="faultyRecords" style="width: 95%" border>
+            <el-table :data="maintainRecords" style="width: 95%" border>
                 <el-table-column prop="equipmentId" label="设备ID" width="560"></el-table-column>
+                <el-table-column prop="operatorName" label="操作员用户名" width="560"></el-table-column>
                 <el-table-column prop="time" label="故障时间" width="560">
                     <template slot-scope="scope">
                         {{ formatDateTime(scope.row.time) }}
                     </template>
                 </el-table-column>
-                <el-table-column prop="equipmentId" label="设备ID" width="560"></el-table-column>
             </el-table>
 
             <div class="block">
@@ -81,13 +103,14 @@
         el: '#app',
         data() {
             return {
-                faultyRecords: [],
+                maintainRecords: [],
                 activeIndex: '3',
                 total: 0,
                 currentPage: 1,
                 date_range: [],
                 query_body: {
                     equipmentId: '',
+                    operatorName: '',
                     startTime: '',
                     endTime: '',
                     page: 0
@@ -116,9 +139,14 @@
                 this.query_body.startTime = this.date_range[0] || '';
                 this.query_body.endTime = this.date_range[1] || '';
                 this.query_body.page = this.currentPage;
-                axios.post("/record/faulty/query", this.query_body)
+                const token = localStorage.getItem("auth_token");
+                axios.post("/record/maintain/query", this.query_body, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
                     .then(res => {
-                        this.faultyRecords = res.data.data.faultyRecords;
+                        this.maintainRecords = res.data.data.maintainRecords;
                         this.total = res.data.data.total;
                     })
                     .catch(err => {
