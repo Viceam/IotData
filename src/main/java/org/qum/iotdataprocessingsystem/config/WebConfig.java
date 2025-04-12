@@ -17,6 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/admin/**", "/admin") // 需要保护的路径
                 .addPathPatterns("/user/**", "/user")
                 .addPathPatterns("/api/**")
+                .addPathPatterns("/record/**")
                 .excludePathPatterns("/admin/login", "/user/login"); // 不需要拦截的路径
 
     }

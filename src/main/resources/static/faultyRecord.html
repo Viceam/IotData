@@ -15,10 +15,10 @@
         <el-container>
             <el-header>工业设备监测系统</el-header>
             <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+                <el-menu-item index="4" @click="to_home">主页</el-menu-item>
                 <el-menu-item index="1" @click="to_monitoring">实时监测</el-menu-item>
                 <el-menu-item index="2">故障记录</el-menu-item>
                 <el-menu-item index="3" @click="to_maintenance">维护记录</el-menu-item>
-                <el-menu-item index="4" @click="to_management">用户管理</el-menu-item>
             </el-menu>
 
             <h3 style="margin: 20px 0; color: #34495e; font-size: 24px; background-color: #ecf0f1; padding: 10px; border-radius: 5px;">
@@ -94,15 +94,12 @@
             };
         },
         methods: {
-            // to_home() {
-            //     // 跳转到设备总览页面
-            // },
+            to_home() {
+                window.location.href = 'home.html';
+            },
             to_monitoring() {
                 // 跳转到实时监测页面
                 window.location.href = 'statistics.html';
-            },
-            to_management() {
-                // 跳转到用户管理页面
             },
             to_maintenance() {
                 // 跳转到维护管理页面
@@ -118,7 +115,13 @@
                 this.query_body.startTime = this.date_range[0] || '';
                 this.query_body.endTime = this.date_range[1] || '';
                 this.query_body.page = this.currentPage;
-                axios.post("/record/faulty/query", this.query_body)
+                const token = localStorage.getItem("auth_token");
+                console.log(token);
+                axios.post("/record/faulty/query", this.query_body, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
                     .then(res => {
                         this.faultyRecords = res.data.data.faultyRecords;
                         this.total = res.data.data.total;
