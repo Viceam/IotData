@@ -48,17 +48,16 @@
         methods: {
             login: function () {
                 axios.post("/admin/login", this.admin).then((res => {
-                    console.log(res.data);
-
                     if (res.data.code === 200) {
                         this.admin.password = '';
                         this.$message({
                             message: '登录成功，正在跳转',
                             type: 'success'
                         });
-                        localStorage.setItem('auth_token', res.data.token);
+                        console.log(res.data.data);
+                        localStorage.setItem('auth_token', res.data.data);
                         setTimeout(() => {
-                            window.location.href = "statistics.html";
+                            window.location.href = "faultyRecord.html";
                         }, 100);
                     } else {
                         this.$message.error('用户名或密码错误');

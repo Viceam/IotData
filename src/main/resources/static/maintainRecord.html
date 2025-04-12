@@ -50,13 +50,14 @@
                 </el-col>
             </el-row>
 
-            <el-table :data="faultyRecords" style="width: 100%" border>
-                <el-table-column prop="equipmentId" label="设备ID" width="960"></el-table-column>
-                <el-table-column prop="time" label="故障时间" width="950">
+            <el-table :data="faultyRecords" style="width: 95%" border>
+                <el-table-column prop="equipmentId" label="设备ID" width="560"></el-table-column>
+                <el-table-column prop="time" label="故障时间" width="560">
                     <template slot-scope="scope">
                         {{ formatDateTime(scope.row.time) }}
                     </template>
                 </el-table-column>
+                <el-table-column prop="equipmentId" label="设备ID" width="560"></el-table-column>
             </el-table>
 
             <div class="block">

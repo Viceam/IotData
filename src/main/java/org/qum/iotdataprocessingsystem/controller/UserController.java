@@ -29,23 +29,23 @@ public class UserController {
         }
 
         Integer result = userService.addUser(user);
-        switch (result) {
-            case 1:
+        return switch (result) {
+            case 1 ->
                 // 插入成功
-                return ResponseEntity.ok(ApiResponse.success("User added successfully"));
-            case 0:
+                    ResponseEntity.ok(ApiResponse.success("User added successfully"));
+            case 0 ->
                 // 用户名已存在
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.error(409, "Username already exists"));
-            case -1:
+                    ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(ApiResponse.error(409, "Username already exists"));
+            case -1 ->
                 // 其他异常
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(ApiResponse.error(500, "An error occurred while adding the user"));
-            default:
+                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(ApiResponse.error(500, "An error occurred while adding the user"));
+            default ->
                 // 未知错误
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(ApiResponse.error(500, "Unknown error"));
-        }
+                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(ApiResponse.error(500, "Unknown error"));
+        };
     }
 
     @PostMapping("/login")
