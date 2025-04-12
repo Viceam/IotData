@@ -33,8 +33,8 @@
                             </div>
                             <div style="padding: 14px; text-align: center;">
                                 <el-button type="text" @click="visible=true" plain>修改密码</el-button>
-                                <el-button type="text" @click="add_operator_visible=true" plain>添加操作员</el-button>
-                                <el-button type="text" @click="add_visible=true" plain>添加管理员</el-button>
+                                <el-button v-if="this.role === 'admin'" type="text" @click="add_operator_visible=true" plain>添加操作员</el-button>
+                                <el-button v-if="this.role === 'admin'" type="text" @click="add_visible=true" plain>添加管理员</el-button>
                             </div>
                         </el-card>
                     </el-col>
@@ -118,7 +118,7 @@
                     </el-form>
                     <span slot="footer" class="dialog-footer">
                 <el-button @click="add_cancel2">取 消</el-button>
-                <el-button type="primary" @click="add">添 加</el-button>
+                <el-button type="primary" @click="add_operator">添 加</el-button>
             </span>
                 </el-dialog>
 
@@ -153,6 +153,7 @@
         data() {
             return {
                 username: '',
+                role: '',
                 activeIndex: '4',
                 visible: false,
                 add_visible: false,
@@ -305,12 +306,13 @@
             },
             getName: function () {
                 const token = localStorage.getItem("auth_token");
-                axios.get("/general/username", {
+                axios.get("/general/userinfo", {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 }).then((res => {
-                    this.username = res.data.data;
+                    this.username = res.data.data.username;
+                    this.role = res.data.data.role;
                 })).catch(err => {
                     console.log(err);
                 })
