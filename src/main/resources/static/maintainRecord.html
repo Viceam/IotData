@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>故障记录查询</title>
+    <title>维护记录查询</title>
     <script src="js/vue.js"></script>
     <script src="js/axios.min.js"></script>
     <link rel="stylesheet" href="css/index.css">
@@ -16,13 +16,13 @@
             <el-header>工业设备监测系统</el-header>
             <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
                 <el-menu-item index="1" @click="to_monitoring">实时监测</el-menu-item>
-                <el-menu-item index="2">故障记录</el-menu-item>
-                <el-menu-item index="3" @click="to_maintenance">维护记录</el-menu-item>
+                <el-menu-item index="2" @click="to_faulty">故障记录</el-menu-item>
+                <el-menu-item index="3">维护记录</el-menu-item>
                 <el-menu-item index="4" @click="to_management">用户管理</el-menu-item>
             </el-menu>
 
             <h3 style="margin: 20px 0; color: #34495e; font-size: 24px; background-color: #ecf0f1; padding: 10px; border-radius: 5px;">
-                设备故障记录查询
+                设备维护记录查询
             </h3>
 
             <el-row :gutter="20">
@@ -81,7 +81,7 @@
         data() {
             return {
                 faultyRecords: [],
-                activeIndex: '2',
+                activeIndex: '3',
                 total: 0,
                 currentPage: 1,
                 date_range: [],
@@ -104,9 +104,9 @@
             to_management() {
                 // 跳转到用户管理页面
             },
-            to_maintenance() {
-                // 跳转到维护管理页面
-                window.location.href = 'maintainRecord.html';
+            to_faulty() {
+                // 跳转到异常记录页面
+                window.location.href = 'faultyRecord.html';
             },
             handleSelect(key, keyPath) {
                 console.log(key, keyPath);
