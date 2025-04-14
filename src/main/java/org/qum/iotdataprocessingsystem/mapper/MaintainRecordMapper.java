@@ -10,8 +10,8 @@ import java.util.List;
 
 @Mapper
 public interface MaintainRecordMapper {
-    @Insert("INSERT INTO maintainrecords (equipment_id, operator_name, time) " +
-            "VALUES (#{equipmentId}, #{operatorName}, #{time})")
+    @Insert("INSERT INTO maintainrecords (equipment_id, operator_name, description, time) " +
+            "VALUES (#{equipmentId}, #{operatorName}, #{description}, #{time})")
     void addMaintainRecord(MaintainRecord maintainRecord);
 
     @Select("SELECT * FROM maintainrecords WHERE time BETWEEN #{startTime} AND #{endTime} " +

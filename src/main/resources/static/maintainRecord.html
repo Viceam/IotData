@@ -73,9 +73,10 @@
             </el-row>
 
             <el-table :data="maintainRecords" style="width: 95%" border>
-                <el-table-column prop="equipmentId" label="设备ID" width="560"></el-table-column>
-                <el-table-column prop="operatorName" label="操作员用户名" width="560"></el-table-column>
-                <el-table-column prop="time" label="故障时间" width="560">
+                <el-table-column prop="equipmentId" label="设备ID" width="360"></el-table-column>
+                <el-table-column prop="operatorName" label="操作员用户名" width="360"></el-table-column>
+                <el-table-column prop="description" label="维护详情" width="360"></el-table-column>
+                <el-table-column prop="time" label="维护时间" width="360">
                     <template slot-scope="scope">
                         {{ formatDateTime(scope.row.time) }}
                     </template>

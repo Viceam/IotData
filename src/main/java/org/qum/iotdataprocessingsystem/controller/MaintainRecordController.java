@@ -5,6 +5,7 @@ import org.qum.iotdataprocessingsystem.dto.MaintainRecordQueryDto;
 import org.qum.iotdataprocessingsystem.dto.MaintainRecordQueryResultDto;
 import org.qum.iotdataprocessingsystem.pojo.MaintainRecord;
 import org.qum.iotdataprocessingsystem.service.MaintainRecordService;
+import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.qum.iotdataprocessingsystem.util.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +19,15 @@ public class MaintainRecordController {
     @Autowired
     private MaintainRecordService maintainRecordService;
 
+    @Autowired
+    private RedisService redisService;
+
     @PostMapping
     public ResponseEntity<ApiResponse<String>> addRecord(@RequestBody MaintainRecord maintainRecord) {
 
         try {
             maintainRecordService.addRecord(maintainRecord);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.ok(ApiResponse.error(500, "error"));
