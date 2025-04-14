@@ -33,8 +33,8 @@
                             </div>
                             <div style="padding: 14px; text-align: center;">
                                 <el-button type="text" @click="visible=true" plain>修改密码</el-button>
-                                <el-button type="text" @click="add_visible=true" plain>添加管理员</el-button>
-                                <el-button type="text" @click="delete_visible=true" plain>删除管理员</el-button>
+                                <el-button v-if="this.role === 'admin'" type="text" @click="add_operator_visible=true" plain>添加操作员</el-button>
+                                <el-button v-if="this.role === 'admin'" type="text" @click="add_visible=true" plain>添加管理员</el-button>
                             </div>
                         </el-card>
                     </el-col>
@@ -98,6 +98,30 @@
             </span>
                 </el-dialog>
 
+                <el-dialog
+                        title="添加操作员"
+                        :visible.sync="add_operator_visible"
+                        width="30%">
+                    <el-form>
+                        <el-form-item label="新操作员用户名">
+                            <el-input v-model="operator.username"></el-input>
+                        </el-form-item>
+                        <el-form-item label="新操作员密码">
+                            <el-input type="password" v-model="operator.password"></el-input>
+                        </el-form-item>
+                        <el-form-item label="新操作员属地">
+                            <el-input v-model="operator.location"></el-input>
+                        </el-form-item>
+                        <el-form-item label="确认密码">
+                            <el-input type="password" v-model="addPwConfirm"></el-input>
+                        </el-form-item>
+                    </el-form>
+                    <span slot="footer" class="dialog-footer">
+                <el-button @click="add_cancel2">取 消</el-button>
+                <el-button type="primary" @click="add_operator">添 加</el-button>
+            </span>
+                </el-dialog>
+
 
                 <el-dialog
                         title="删除管理员"
@@ -129,9 +153,11 @@
         data() {
             return {
                 username: '',
+                role: '',
                 activeIndex: '4',
                 visible: false,
                 add_visible: false,
+                add_operator_visible: false,
                 delete_visible: false,
                 updatePW: {
                   pw: '',
@@ -148,6 +174,11 @@
                 admin: {
                     username: '',
                     password: ''
+                },
+                operator: {
+                    username: '',
+                    password: '',
+                    location: ''
                 }
             };
         },
@@ -171,6 +202,12 @@
                 this.add_visible = false;
                 this.admin.username = '';
                 this.admin.password = '';
+                this.addPwConfirm = '';
+            },
+            add_cancel2() {
+                this.add_operator_visible = false;
+                this.operator.username = '';
+                this.operator.password = '';
                 this.addPwConfirm = '';
             },
             add() {
@@ -200,6 +237,9 @@
                 })).catch(err=>{
                     console.log(err);
                 });
+            },
+            add_operator() {
+
             },
             delete_admin() {
               if(this.delete_username === this.username) {
@@ -265,15 +305,14 @@
                 console.log(key, keyPath);
             },
             getName: function () {
-                axios.get("/admin").then((res => {
-                    if (res.data === "Invalid") {
-                        this.$message.error('登录失效，请重新登录');
-                        setTimeout(() => {
-                            window.location.href = "login.html";
-                        }, 500);
-                    } else {
-                        this.username = res.data;
+                const token = localStorage.getItem("auth_token");
+                axios.get("/general/userinfo", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
                     }
+                }).then((res => {
+                    this.username = res.data.data.username;
+                    this.role = res.data.data.role;
                 })).catch(err => {
                     console.log(err);
                 })
@@ -301,7 +340,7 @@
             }
         },
         created() {
-            // this.getName();
+            this.getName();
             this.addAnnouncements();
         }
     });

@@ -18,8 +18,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/user/**", "/user")
                 .addPathPatterns("/api/**")
                 .addPathPatterns("/record/**")
+                .addPathPatterns("/general/**")
                 .excludePathPatterns("/admin/login", "/user/login"); // 不需要拦截的路径
-
     }
 }
 

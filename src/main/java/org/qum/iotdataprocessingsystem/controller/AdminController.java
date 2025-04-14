@@ -2,6 +2,7 @@ package org.qum.iotdataprocessingsystem.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.qum.iotdataprocessingsystem.dto.AdminLoginDto;
+import org.qum.iotdataprocessingsystem.pojo.Admin;
 import org.qum.iotdataprocessingsystem.service.AdminService;
 import org.qum.iotdataprocessingsystem.util.ApiResponse;
 import org.qum.iotdataprocessingsystem.util.ConstUtil;
@@ -55,5 +56,13 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(401, "Invalid credentials"));
         }
+    }
+
+    /**
+     * 添加管理员
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<String>> addAdmin(@RequestBody Admin admin) {
+        return null;
     }
 }
