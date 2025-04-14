@@ -4,6 +4,7 @@ import org.qum.iotdataprocessingsystem.dto.EquipmentsStatusDto;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -133,5 +134,22 @@ public class RedisService {
         }
 
         return result;
+    }
+
+    /**
+     * 删除设备相关数据（Hash和ZSet）
+     * @param equipmentId 设备ID
+     */
+    public void deleteDeviceData(String equipmentId) {
+        String luaScript = """
+        redis.call('DEL', KEYS[1])
+        redis.call('ZREM', KEYS[2], ARGV[1])
+        return 1
+    """;
+        redisTemplate.execute(
+                new DefaultRedisScript<>(luaScript, Long.class),
+                Arrays.asList("device:" + equipmentId, "abnormal_devices"),
+                equipmentId
+        );
     }
 }
