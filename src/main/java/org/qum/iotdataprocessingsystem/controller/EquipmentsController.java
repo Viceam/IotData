@@ -20,6 +20,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/equipment")
+@CrossOrigin(origins = "*")
 public class EquipmentsController {
     @Autowired
     private InfluxDBService influxDBService;

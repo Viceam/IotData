@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/record/maintain")
+@CrossOrigin(origins = "*")
 public class MaintainRecordController {
     @Autowired
     private MaintainRecordService maintainRecordService;
