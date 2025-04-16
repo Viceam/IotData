@@ -279,23 +279,29 @@
                     this.$message.error('两次输入的密码不一致');
                     return;
                 }
-                let params = new URLSearchParams();
-                params.append('username', this.username);
-                params.append('pw', this.updatePW.pw);
-                params.append('npw', this.updatePW.npw);
-                axios.post("/admin/update/pw", params, {
+                // let params = new URLSearchParams();
+                const token = localStorage.getItem("auth_token");
+                // params.append('username', this.username);
+                // params.append('pw', this.updatePW.pw);
+                // params.append('npw', this.updatePW.npw);
+                this.updatePW.username = this.username;
+                console.log(this.updatePW);
+                axios.post("/general/pw", this.updatePW, {
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Authorization': `Bearer ${token}`
                     }
                 }).then((res=>{
-                    if(res.data === 'ok') {
+                    if(res.data.data === 'ok') {
                         this.visible = false;
                         this.$message({
                             message: '修改成功',
                             type: 'success'
                         });
+                        this.updatePW.pw = '';
+                        this.updatePW.npw = '';
+                        this.updatePW.cnpw = '';
                     } else {
-                        this.$message.error('密码错误');
+                        this.$message.error('修改失败');
                     }
                 })).catch(err=>{
                    console.log(err);

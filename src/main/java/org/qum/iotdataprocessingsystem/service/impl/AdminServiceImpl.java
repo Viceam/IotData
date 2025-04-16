@@ -24,7 +24,16 @@ public class AdminServiceImpl implements AdminService {
         if(password == null) {
             return false;
         }
-
         return password.equals(PasswordUtil.hashPassword(adminLoginDto.getPassword()));
+    }
+
+    @Override
+    public void setPassword(Admin admin) {
+        adminMapper.updatePassword(admin);
+    }
+
+    @Override
+    public String getPwByUsername(String username) {
+        return adminMapper.getPasswordByUsername(username);
     }
 }
