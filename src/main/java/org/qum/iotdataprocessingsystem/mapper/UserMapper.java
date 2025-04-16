@@ -19,4 +19,7 @@ public interface UserMapper {
 
     @Select("SELECT location FROM users WHERE username = #{username}")
     String getLocationByUsername(String username);
+
+    @Update("UPDATE users SET password = #{password} WHERE username = #{username}")
+    void updatePw(User user);
 }

@@ -4,7 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.qum.iotdataprocessingsystem.dto.UpdatePasswordDto;
 import org.qum.iotdataprocessingsystem.dto.UserInfo;
 import org.qum.iotdataprocessingsystem.pojo.Admin;
+import org.qum.iotdataprocessingsystem.pojo.User;
 import org.qum.iotdataprocessingsystem.service.AdminService;
+import org.qum.iotdataprocessingsystem.service.UserService;
 import org.qum.iotdataprocessingsystem.util.ApiResponse;
 import org.qum.iotdataprocessingsystem.util.ConstUtil;
 import org.qum.iotdataprocessingsystem.util.PasswordUtil;
@@ -20,7 +22,10 @@ import java.util.Objects;
 @CrossOrigin(origins = "*")
 public class GeneralController {
     @Autowired
-    AdminService adminService;
+    private AdminService adminService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/userinfo")
     public ResponseEntity<ApiResponse<UserInfo>> getUsername(HttpServletRequest request) {
@@ -53,9 +58,24 @@ public class GeneralController {
 
             return ResponseEntity.ok(ApiResponse.error(401, "error"));
         }
-        else {
-            return ResponseEntity.status(404).body(ApiResponse.error(404, "uncompleted"));
+        else if(ConstUtil.USER.equals(role)) {
+            //普通用户
+            String origin_password = userService.getPwByUsername(updatePasswordDto.getUsername());
+            String password = PasswordUtil.hashPassword(updatePasswordDto.getPw());
+
+            if(Objects.equals(origin_password, password)) {
+                User user = new User();
+                user.setUsername(updatePasswordDto.getUsername());
+                user.setPassword(PasswordUtil.hashPassword(updatePasswordDto.getNpw()));
+                userService.updatePassword(user);
+                return ResponseEntity.ok(ApiResponse.success("ok"));
+            }
+
+            return ResponseEntity.ok(ApiResponse.error(401, "error"));
         }
 
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(401, "Invalid credentials"));
     }
 }
