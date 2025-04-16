@@ -220,9 +220,13 @@
                     this.$message.error("两次输入的密码不一致");
                     return;
                 }
-
-                axios.post("/admin/save", this.admin).then((res=>{
-                   if(res.data === "ok") {
+                const token = localStorage.getItem("auth_token");
+                axios.post("/admin", this.admin, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).then((res=>{
+                   if(res.data.data === "ok") {
                        this.add_visible = false;
                        this.admin.username = '';
                        this.admin.password = '';

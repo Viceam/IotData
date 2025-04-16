@@ -9,4 +9,7 @@ public interface AdminService {
     void setPassword(Admin admin);
 
     String getPwByUsername(String username);
+
+    int insert(Admin admin);
+
 }

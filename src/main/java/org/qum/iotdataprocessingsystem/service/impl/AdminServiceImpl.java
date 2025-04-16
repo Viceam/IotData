@@ -36,4 +36,15 @@ public class AdminServiceImpl implements AdminService {
     public String getPwByUsername(String username) {
         return adminMapper.getPasswordByUsername(username);
     }
+
+    @Override
+    public int insert(Admin admin) {
+        int cnt = adminMapper.getCountByUsername(admin.getUsername());
+        if(cnt != 0) {
+            return 0;
+        }
+        admin.setPassword(PasswordUtil.hashPassword(admin.getPassword()));
+        adminMapper.insert(admin);
+        return 1;
+    }
 }
