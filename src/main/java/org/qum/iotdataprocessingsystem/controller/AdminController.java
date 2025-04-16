@@ -2,23 +2,29 @@ package org.qum.iotdataprocessingsystem.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.qum.iotdataprocessingsystem.dto.AdminLoginDto;
+import org.qum.iotdataprocessingsystem.dto.UpdatePasswordDto;
 import org.qum.iotdataprocessingsystem.pojo.Admin;
 import org.qum.iotdataprocessingsystem.service.AdminService;
 import org.qum.iotdataprocessingsystem.util.ApiResponse;
 import org.qum.iotdataprocessingsystem.util.ConstUtil;
 import org.qum.iotdataprocessingsystem.util.JwtUtils;
+import org.qum.iotdataprocessingsystem.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/admin")
+@CrossOrigin(origins = "*")
 public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
 
     /**
      * 测试接口：验证管理员权限
@@ -62,7 +68,21 @@ public class AdminController {
      * 添加管理员
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<String>> addAdmin(@RequestBody Admin admin) {
-        return null;
+    public ResponseEntity<ApiResponse<String>> addAdmin(@RequestBody Admin admin, HttpServletRequest request) {
+        // 获取用户角色
+        String role = (String) request.getAttribute("role");
+
+        // 验证角色是否为管理员
+        if (!ConstUtil.ADMIN.equals(role)) {
+            // 返回 401 Unauthorized 响应
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(401, "Invalid credentials"));
+        }
+
+        if(adminService.insert(admin) == 1) {
+            return ResponseEntity.ok(ApiResponse.success("ok"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.error(400, "用户名已存在"));
     }
 }

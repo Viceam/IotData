@@ -1,6 +1,7 @@
 package org.qum.iotdataprocessingsystem.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.kafka.shaded.com.google.protobuf.Api;
 import org.qum.iotdataprocessingsystem.dto.AdminLoginDto;
 import org.qum.iotdataprocessingsystem.dto.UserLoginDto;
 import org.qum.iotdataprocessingsystem.pojo.User;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -32,11 +34,10 @@ public class UserController {
         return switch (result) {
             case 1 ->
                 // 插入成功
-                    ResponseEntity.ok(ApiResponse.success("User added successfully"));
+                    ResponseEntity.ok(ApiResponse.success("ok"));
             case 0 ->
                 // 用户名已存在
-                    ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body(ApiResponse.error(409, "Username already exists"));
+                    ResponseEntity.ok(ApiResponse.error(400, "error"));
             case -1 ->
                 // 其他异常
                     ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

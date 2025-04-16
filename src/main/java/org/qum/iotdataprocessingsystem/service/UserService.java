@@ -12,4 +12,8 @@ public interface UserService {
     boolean update(User user);
 
     String getLocationByUsername(String username);
+
+    String getPwByUsername(String username);
+
+    void updatePassword(User user);
 }

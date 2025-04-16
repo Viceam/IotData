@@ -5,8 +5,11 @@ import org.qum.iotdataprocessingsystem.dto.MaintainRecordQueryDto;
 import org.qum.iotdataprocessingsystem.dto.MaintainRecordQueryResultDto;
 import org.qum.iotdataprocessingsystem.pojo.MaintainRecord;
 import org.qum.iotdataprocessingsystem.service.MaintainRecordService;
+import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.qum.iotdataprocessingsystem.util.ApiResponse;
+import org.qum.iotdataprocessingsystem.util.ConstUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,15 +17,28 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/record/maintain")
+@CrossOrigin(origins = "*")
 public class MaintainRecordController {
     @Autowired
     private MaintainRecordService maintainRecordService;
 
+    @Autowired
+    private RedisService redisService;
+
     @PostMapping
-    public ResponseEntity<ApiResponse<String>> addRecord(@RequestBody MaintainRecord maintainRecord) {
+    public ResponseEntity<ApiResponse<String>> addRecord(@RequestBody MaintainRecord maintainRecord, HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if(!ConstUtil.USER.equals(role)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(401, "Invalid credentials"));
+        }
 
         try {
             maintainRecordService.addRecord(maintainRecord);
+            String equipmentId = maintainRecord.getEquipmentId();
+            redisService.decr("abnormal_total");
+            redisService.deleteDeviceData(equipmentId);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.ok(ApiResponse.error(500, "error"));

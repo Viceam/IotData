@@ -1,5 +1,6 @@
 package org.qum.iotdataprocessingsystem.service.impl;
 
+import org.apache.ibatis.annotations.Update;
 import org.qum.iotdataprocessingsystem.dto.UserLoginDto;
 import org.qum.iotdataprocessingsystem.mapper.UserMapper;
 import org.qum.iotdataprocessingsystem.pojo.User;
@@ -63,7 +64,7 @@ public class UserServiceImpl implements UserService {
             // 更新成功
             return true;
         } catch (Exception e) {
-            // 捕获异常并打印日志（可以根据需要记录更详细的日志）
+            // 捕获异常并打印日志
             System.err.println("更新用户信息时发生异常: " + e.getMessage());
             e.printStackTrace();
 
@@ -75,5 +76,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getLocationByUsername(String username) {
         return userMapper.getLocationByUsername(username);
+    }
+
+    @Override
+    public String getPwByUsername(String username) {
+        return userMapper.getPasswordByUsername(username);
+    }
+
+    @Override
+    public void updatePassword(User user) {
+        userMapper.updatePw(user);
     }
 }

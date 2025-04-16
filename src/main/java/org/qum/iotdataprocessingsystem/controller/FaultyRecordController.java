@@ -15,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/record/faulty")
+@CrossOrigin(origins = "*")
 public class FaultyRecordController {
     @Autowired
     private FaultyRecordService faultyRecordService;

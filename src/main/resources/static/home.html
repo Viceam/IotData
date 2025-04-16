@@ -13,7 +13,7 @@
 <div id="app">
     <div id="container">
         <el-container>
-            <el-header>FleaMarket</el-header>
+            <el-header>工业设备监测系统</el-header>
             <el-main>
                 <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
                     <el-menu-item index="4">主页</el-menu-item>
@@ -106,11 +106,11 @@
                         <el-form-item label="新操作员用户名">
                             <el-input v-model="operator.username"></el-input>
                         </el-form-item>
-                        <el-form-item label="新操作员密码">
-                            <el-input type="password" v-model="operator.password"></el-input>
-                        </el-form-item>
                         <el-form-item label="新操作员属地">
                             <el-input v-model="operator.location"></el-input>
+                        </el-form-item>
+                        <el-form-item label="新操作员密码">
+                            <el-input type="password" v-model="operator.password"></el-input>
                         </el-form-item>
                         <el-form-item label="确认密码">
                             <el-input type="password" v-model="addPwConfirm"></el-input>
@@ -139,7 +139,7 @@
                 </el-dialog>
 
             </el-main>
-            <el-footer>Copyright © 2023.FleaMarket All rights reserved.</el-footer>
+            <el-footer>Copyright © 2025.工业设备监测系统 All rights reserved.</el-footer>
 
         </el-container>
 
@@ -208,6 +208,7 @@
                 this.add_operator_visible = false;
                 this.operator.username = '';
                 this.operator.password = '';
+                this.operator.location = '';
                 this.addPwConfirm = '';
             },
             add() {
@@ -220,9 +221,13 @@
                     this.$message.error("两次输入的密码不一致");
                     return;
                 }
-
-                axios.post("/admin/save", this.admin).then((res=>{
-                   if(res.data === "ok") {
+                const token = localStorage.getItem("auth_token");
+                axios.post("/admin", this.admin, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).then((res=>{
+                   if(res.data.data === "ok") {
                        this.add_visible = false;
                        this.admin.username = '';
                        this.admin.password = '';
@@ -239,7 +244,38 @@
                 });
             },
             add_operator() {
+                if(this.operator.username === '' || this.operator.password === '' || this.operator.location === '') {
+                    this.$message.error("请输入用户信息");
+                    return;
+                }
 
+                if(this.addPwConfirm !== this.operator.password) {
+                    this.$message.error("两次输入的密码不一致");
+                    return;
+                }
+
+                const token = localStorage.getItem("auth_token");
+                axios.post("/user/add", this.operator, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).then((res=>{
+                    if(res.data.data === "ok") {
+                        this.add_operator_visible = false;
+                        this.operator.username = '';
+                        this.operator.password = '';
+                        this.addPwConfirm = '';
+                        this.operator.location = '';
+                        this.$message({
+                            message: '添加成功',
+                            type: 'success'
+                        });
+                    } else {
+                        this.$message.error("用户名已存在");
+                    }
+                })).catch(err=>{
+                    console.log(err);
+                });
             },
             delete_admin() {
               if(this.delete_username === this.username) {
@@ -279,23 +315,29 @@
                     this.$message.error('两次输入的密码不一致');
                     return;
                 }
-                let params = new URLSearchParams();
-                params.append('username', this.username);
-                params.append('pw', this.updatePW.pw);
-                params.append('npw', this.updatePW.npw);
-                axios.post("/admin/update/pw", params, {
+                // let params = new URLSearchParams();
+                const token = localStorage.getItem("auth_token");
+                // params.append('username', this.username);
+                // params.append('pw', this.updatePW.pw);
+                // params.append('npw', this.updatePW.npw);
+                this.updatePW.username = this.username;
+                console.log(this.updatePW);
+                axios.post("/general/pw", this.updatePW, {
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Authorization': `Bearer ${token}`
                     }
                 }).then((res=>{
-                    if(res.data === 'ok') {
+                    if(res.data.data === 'ok') {
                         this.visible = false;
                         this.$message({
                             message: '修改成功',
                             type: 'success'
                         });
+                        this.updatePW.pw = '';
+                        this.updatePW.npw = '';
+                        this.updatePW.cnpw = '';
                     } else {
-                        this.$message.error('密码错误');
+                        this.$message.error('修改失败');
                     }
                 })).catch(err=>{
                    console.log(err);
