@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
+import org.qum.iotdataprocessingsystem.pojo.EquipmentData;
 import org.qum.iotdataprocessingsystem.service.FaultyRecordService;
 import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
@@ -41,6 +43,8 @@ public class MqttConfig {
     @Autowired
     FaultyRecordService faultyRecordService;
 
+    @Autowired
+    KafkaTemplate<String, EquipmentData> kafkaTemplate;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -102,11 +106,27 @@ public class MqttConfig {
                 String equipment = root.get("equipment").asText();
                 String location = root.get("location").asText();
                 int faulty = checkFault(temperature, pressure, vibration, humidity);
+
+                // 构造 EquipmentData 对象
+                LocalDateTime utc8DateTime = LocalDateTime.ofInstant(
+                        timestamp,
+                        ZoneId.of("Asia/Shanghai") // 使用上海时区（UTC+8）
+                );
+
+                EquipmentData equipmentData = new EquipmentData();
+                equipmentData.setEquipmentId(deviceId);
+                equipmentData.setTemperature(temperature);
+                equipmentData.setPressure(pressure);
+                equipmentData.setVibration(vibration);
+                equipmentData.setHumidity(humidity);
+                equipmentData.setFaulty(faulty);
+                equipmentData.setTime(utc8DateTime); // 使用 UTC+8 时间
+
+                // 发送数据到 Kafka
+                kafkaTemplate.send("equipment-data-topic", deviceId, equipmentData);
+
                 if(faulty == 1) {
-                    LocalDateTime utc8DateTime = LocalDateTime.ofInstant(
-                            timestamp,
-                            ZoneId.of("Asia/Shanghai") // 使用上海时区（UTC+8）
-                    );
+
                     System.out.println(deviceId + "异常");
                     faultyRecordService.add(deviceId, utc8DateTime);
 
