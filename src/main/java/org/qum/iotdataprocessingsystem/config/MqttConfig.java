@@ -7,6 +7,7 @@ import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
 import org.qum.iotdataprocessingsystem.pojo.EquipmentData;
 import org.qum.iotdataprocessingsystem.service.FaultyRecordService;
+import org.qum.iotdataprocessingsystem.service.PredictionClient;
 import org.qum.iotdataprocessingsystem.service.impl.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +46,9 @@ public class MqttConfig {
 
     @Autowired
     KafkaTemplate<String, EquipmentData> kafkaTemplate;
+
+    @Autowired
+    PredictionClient predictionClient;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -105,7 +109,10 @@ public class MqttConfig {
                 double humidity = root.get("humidity").asDouble();
                 String equipment = root.get("equipment").asText();
                 String location = root.get("location").asText();
-                int faulty = checkFault(temperature, pressure, vibration, humidity);
+                //int faulty = checkFault(temperature, pressure, vibration, humidity);
+
+                // 此处改为grpc
+                int faulty = predictionClient.predict(temperature, pressure, vibration, humidity);
 
                 // 构造 EquipmentData 对象
                 LocalDateTime utc8DateTime = LocalDateTime.ofInstant(
