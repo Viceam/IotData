@@ -3,47 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <title>状态监测</title>
-    <link rel="stylesheet" href="js/element/index.js">
     <script src="js/vue.js"></script>
     <script src="js/axios.min.js"></script>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="admin.css">
     <script src="js/element/index.js"></script>
     <script src="js/echarts.min.js"></script>
 </head>
 <body>
 <div id="app">
-    <!-- 查询表单 -->
-    <div class="query-form">
-        <el-form :inline="true" :model="queryParams" @submit.prevent="manualFetch">
-            <el-form-item label="设备ID">
-                <el-input v-model="queryParams.equipmentId" placeholder="请输入设备ID"></el-input>
-            </el-form-item>
-            <el-form-item label="时间范围">
-                <el-date-picker
-                        v-model="dateRange"
-                        type="datetimerange"
-                        :picker-options="pickerOptions"
-                        range-separator="至"
-                        start-placeholder="开始时间"
-                        end-placeholder="结束时间"
-                        format="yyyy-MM-dd HH:mm:ss"
-                        value-format="yyyy-MM-ddTHH:mm:ss"
-                ></el-date-picker>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="primary" @click="manualFetch">查询</el-button>
-                <el-button @click="toggleAutoUpdate" :type="autoUpdate ? 'success' : 'info'">
-                    {{ autoUpdate ? '停止实时' : '启动实时' }}
-                </el-button>
-            </el-form-item>
-        </el-form>
-    </div>
+    <div id="container">
+        <el-container>
+            <el-header>工业设备监测系统</el-header>
+            <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+                <el-menu-item index="4" @click="to_home">主页</el-menu-item>
+                <el-menu-item index="1">实时监测</el-menu-item>
+                <el-menu-item index="2" @click="to_faulty">故障记录</el-menu-item>
+                <el-menu-item index="3" @click="to_maintenance">维护记录</el-menu-item>
+            </el-menu>
 
-    <!-- 图表容器 -->
-    <div class="chart-container">
-        <div class="chart-item" ref="temperatureChart" style="width: 100%; height: 400px;"></div>
-        <div class="chart-item" ref="pressureChart" style="width: 100%; height: 400px;"></div>
-        <div class="chart-item" ref="vibrationChart" style="width: 100%; height: 400px;"></div>
-        <div class="chart-item" ref="humidityChart" style="width: 100%; height: 400px;"></div>
+            <h3 style="margin: 20px 0; color: #34495e; font-size: 24px; background-color: #ecf0f1; padding: 10px; border-radius: 5px;">
+                设备状态监测
+            </h3>
+
+            <el-form :inline="true">
+                <el-form-item label="设备ID">
+                    <el-select
+                            v-model="queryParams.equipmentId"
+                            placeholder="请选择设备ID"
+                            @change="fetchData"
+                    >
+                        <!-- 修改部分：遍历 equipment_ids 数组 -->
+                        <el-option
+                                v-for="id in equipment_ids"
+                                :key="id"
+                                :label="id"
+                                :value="id"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+
+            <!-- 图表容器 -->
+            <div class="chart-container">
+                <div class="chart-grid">
+                    <!-- 第一行 -->
+                    <div class="chart-item" ref="temperatureChart" style="width: 580px; height: 300px;"></div>
+                    <div class="chart-item" ref="pressureChart" style="width: 580px; height: 300px;"></div>
+                    <div class="alert-container" style="width: 100%; height: 660px; grid-row: span 2;">
+                        <h4 style="color: #E6A23C; margin-bottom: 10px;">设备预警信息</h4>
+                        <el-table :data="alerts" style="width: 100%">
+                            <el-table-column prop="equipmentId" label="设备ID"></el-table-column>
+                            <el-table-column prop="type" label="设备类型"></el-table-column>
+                            <el-table-column prop="location" label="位置"></el-table-column>
+                            <el-table-column prop="timestamp" label="时间"></el-table-column>
+                            <el-table-column label="操作">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" @click="showRadarChart(scope.row)">查看雷达图</el-button>
+                                    <el-button size="mini" type="primary" @click="showMaintainDialog(scope.row)" v-if="userRole === 'user'">维护</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                    <!-- 第二行 -->
+                    <div class="chart-item" ref="vibrationChart" style="width: 580px; height: 300px;"></div>
+                    <div class="chart-item" ref="statusChart" style="width: 580px; height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- 雷达图对话框 -->
+            <el-dialog :visible.sync="radarDialogVisible" width="50%">
+                <div ref="radarChart" style="width: 100%; height: 400px;"></div>
+            </el-dialog>
+
+            <!-- 维护记录对话框 -->
+            <el-dialog title="添加维护记录" :visible.sync="maintainDialogVisible" width="50%">
+                <el-form :model="maintainForm" label-width="100px">
+                    <el-form-item label="设备ID">
+                        <el-input v-model="maintainForm.equipmentId" disabled></el-input>
+                    </el-form-item>
+                    <el-form-item label="维护内容">
+                        <el-input type="textarea" v-model="maintainForm.description"></el-input>
+                    </el-form-item>
+<!--                    <el-form-item label="维护人员">-->
+<!--                        <el-input v-model="maintainForm.operatorName"></el-input>-->
+<!--                    </el-form-item>-->
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="maintainDialogVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="submitMaintain">确 定</el-button>
+                </div>
+            </el-dialog>
+
+          
+            <el-footer>Copyright © 2025.工业设备监测系统 All rights reserved.</el-footer>
+        </el-container>
     </div>
 </div>
 
@@ -52,94 +106,187 @@
         el: '#app',
         data() {
             return {
+                activeIndex: '1',
                 queryParams: {
                     equipmentId: 'sensor_0',
-                    startTime: '',
-                    endTime: ''
+                    startTime: this.formatDate(new Date(Date.now() - 15 * 60 * 1000)),
+                    endTime: this.formatDate(new Date())
                 },
-                dateRange: [],
+                // dateRange: [],
                 charts: {},
-                pickerOptions: {
-                    shortcuts: [{
-                        text: '最近24小时',
-                        onClick(picker) {
-                            const end = new Date();
-                            const start = new Date();
-                            start.setTime(start.getTime() - 3600 * 1000 * 24);
-                            picker.$emit('pick', [start, end]);
-                        }
-                    }]
+                pollingTimer: null,
+                token: localStorage.getItem('auth_token'),
+                alerts: [],
+                userRole: '',
+                radarDialogVisible: false,
+                maintainDialogVisible: false,
+                maintainForm: {
+                    equipmentId: '',
+                    description: '',
+                    operatorName: ''
                 },
-                autoUpdate: true,
-                pollingTimer: null
+                radarChart: null,
+                equipment_ids: []
             }
         },
         mounted() {
+            if (!this.token) {
+                this.$message.error('请先登录');
+                window.location.href = 'login.html';
+                return;
+            }
+            this.getAcc();
+            this.getUserInfo();
             this.initCharts();
-            this.startAutoUpdate();
+            this.startAutoUpdate(); // 直接启动自动更新
+
         },
         beforeDestroy() {
-            this.stopAutoUpdate();
+            // this.stopAutoUpdate();
         },
         methods: {
+            to_home() {
+                window.location.href = 'home.html';
+            },
+            to_faulty() {
+                window.location.href = 'faultyRecord.html';
+            },
+            to_maintenance() {
+                window.location.href = 'maintainRecord.html';
+            },
+            handleSelect(key, keyPath) {
+                console.log(key, keyPath);
+            },
+            getAcc() {
+                const token = localStorage.getItem("auth_token");
+                axios.get("/api/equipment/accessibleIds", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                    .then(res => {
+                        this.equipment_ids = res.data.data;
+                        this.queryParams.equipmentId = this.equipment_ids[0];
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        this.$message.error('ids查询失败');
+                    });
+            },
             initCharts() {
-                const chartNames = ['temperature', 'pressure', 'vibration', 'humidity'];
+                const chartNames = ['status', 'temperature', 'pressure', 'vibration'];
                 chartNames.forEach(name => {
                     this.$nextTick(() => {
                         this.charts[name] = echarts.init(this.$refs[`${name}Chart`]);
-                        this.charts[name].setOption({
-                            title: { text: this.getChartTitle(name) },
-                            tooltip: { trigger: 'axis' },
-                            xAxis: { type: 'time', name: '时间' },
-                            yAxis: { type: 'value', name: this.getAxisName(name) },
-                            series: [{ type: 'line', data: [], showSymbol: false }]
-                        });
+                        if (name === 'status') {
+                            this.charts[name].setOption({
+                                title: { text: '设备状态比例' },
+                                tooltip: { trigger: 'item' },
+                                series: [{
+                                    type: 'pie',
+                                    radius: '50%',
+                                    data: [
+                                        { value: 0, name: '正常', itemStyle: { color: '#409EFF' } },
+                                        { value: 0, name: '异常', itemStyle: { color: '#F56C6C' } }
+                                    ],
+                                    emphasis: {
+                                        itemStyle: {
+                                            shadowBlur: 10,
+                                            shadowOffsetX: 0,
+                                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                        }
+                                    }
+                                }]
+                            });
+                        } else {
+                            this.charts[name].setOption({
+                                title: { text: this.getChartTitle(name) },
+                                tooltip: { trigger: 'axis' },
+                                xAxis: { type: 'time', name: '时间' },
+                                yAxis: { type: 'value', name: this.getAxisName(name) },
+                                series: [{ type: 'line', data: [], showSymbol: false }]
+                            });
+                        }
                     });
                 });
             },
             getChartTitle(name) {
                 return {
+                    status: '设备状态比例',
                     temperature: '温度趋势',
                     pressure: '压力趋势',
-                    vibration: '振动趋势',
-                    humidity: '湿度趋势'
+                    vibration: '振动趋势'
                 }[name];
             },
             getAxisName(name) {
                 return {
                     temperature: '℃',
                     pressure: 'kPa',
-                    vibration: 'mm/s',
-                    humidity: '%'
+                    vibration: 'mm/s'
                 }[name];
             },
             formatDate(date) {
-                return date.toISOString().replace('Z', '');
+                // 获取本地时区（UTC+8）的日期时间组件
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始，需 +1
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
+
+                // 拼接为 ISO 格式（YYYY-MM-DDTHH:mm:ss.sss）
+                return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}`;
             },
             async fetchData() {
-                // 实时更新模式：自动设置时间范围为最近24小时
-                if (this.autoUpdate) {
-                    const now = new Date();
-                    const start = new Date(now.getTime() - 24 * 3600 * 1000);
-                    this.dateRange = [this.formatDate(start), this.formatDate(now)];
+                console.log("fetch");
+                const now = new Date();
+                const start = new Date(now.getTime() - 15 * 60 * 1000);
+                console.log(now);
+                this.queryParams.startTime = this.formatDate(start);
+                this.queryParams.endTime = this.formatDate(now);
+                console.log(this.queryParams.startTime);
+                // 获取设备状态比例
+                try {
+                    const statusResponse = await axios.get(`http://localhost:8081/api/equipment/status/ratio`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    
+                    if (statusResponse.data.code === 200) {
+                        const normalRatio = parseFloat(statusResponse.data.data);
+                        const abnormalRatio = parseFloat((1 - normalRatio).toFixed(16));
+                        this.charts.status.setOption({
+                            series: [{
+                                data: [
+                                    { value: normalRatio, name: '正常', itemStyle: { color: '#409EFF' } },
+                                    { value: abnormalRatio, name: '异常', itemStyle: { color: '#F56C6C' } }
+                                ]
+                            }]
+                        });
+                    }
+                } catch (error) {
+                    console.error('获取设备状态比例失败:', error);
                 }
-
-                if (!this.dateRange || this.dateRange.length !== 2) {
-                    this.$message.warning('请选择完整的时间范围');
-                    return;
-                }
-
-                this.queryParams.startTime = this.dateRange[0];
-                this.queryParams.endTime = this.dateRange[1];
 
                 try {
                     const response = await axios.get(`http://localhost:8081/api/equipment/${this.queryParams.equipmentId}`, {
                         params: {
                             startTime: this.queryParams.startTime,
                             endTime: this.queryParams.endTime
+                        },
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
                         }
                     });
-
+                    
+                    if (response.data.code === 401) {
+                        this.$message.error('认证已过期，请重新登录');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
                     const data = response.data.data;
                     if (!data.length) {
                         this.$message.warning('未查询到相关数据');
@@ -150,8 +297,7 @@
                     const seriesData = {
                         temperature: [],
                         pressure: [],
-                        vibration: [],
-                        humidity: []
+                        vibration: []
                     };
 
                     data.forEach(item => {
@@ -159,14 +305,15 @@
                         seriesData.temperature.push([timestamp, item.temperature]);
                         seriesData.pressure.push([timestamp, item.pressure]);
                         seriesData.vibration.push([timestamp, item.vibration]);
-                        seriesData.humidity.push([timestamp, item.humidity]);
                     });
 
                     // 更新图表
                     Object.keys(this.charts).forEach(key => {
-                        this.charts[key].setOption({
-                            series: [{ data: seriesData[key] }]
-                        });
+                        if (key !== 'status') {  // 不更新状态比例图
+                            this.charts[key].setOption({
+                                series: [{ data: seriesData[key] }]
+                            });
+                        }
                     });
 
                 } catch (error) {
@@ -174,30 +321,96 @@
                 }
             },
             startAutoUpdate() {
-                this.autoUpdate = true;
-                this.stopAutoUpdate(); // 防止重复启动
+                // this.stopAutoUpdate();
                 this.pollingTimer = setInterval(() => {
                     this.fetchData();
-                }, 30000);
-                this.fetchData(); // 立即获取一次数据
+                    this.fetchAlerts();
+                }, 30000); // 30秒轮询
+                this.fetchData(); // 立即获取数据
+                this.fetchAlerts();
             },
-            stopAutoUpdate() {
-                this.autoUpdate = false;
-                if (this.pollingTimer) {
-                    clearInterval(this.pollingTimer);
-                    this.pollingTimer = null;
+            async fetchAlerts() {
+
+                try {
+                    const response = await axios.get('http://localhost:8081/api/equipment/alerts', {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    if (response.data.code === 200) {
+                        this.alerts = response.data.data;
+                    }
+                } catch (error) {
+                    this.$message.error('获取预警信息失败: ' + error.message);
                 }
             },
-            toggleAutoUpdate() {
-                if (this.autoUpdate) {
-                    this.stopAutoUpdate();
-                } else {
-                    this.startAutoUpdate();
+            async getUserInfo() {
+                try {
+                    const response = await axios.get('http://localhost:8081/general/userinfo', {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    console.log(response.data);
+                    if (response.data.code === 200) {
+                        this.userRole = response.data.data.role;
+                    }
+                } catch (error) {
+                    this.$message.error('获取用户信息失败: ' + error.message);
                 }
             },
-            manualFetch() {
-                this.stopAutoUpdate();
-                this.fetchData();
+            showRadarChart(row) {
+                this.radarDialogVisible = true;
+                this.$nextTick(() => {
+                    if (!this.radarChart) {
+                        this.radarChart = echarts.init(this.$refs.radarChart);
+                    }
+                    this.radarChart.setOption({
+                        title: {
+                            text: '设备参数雷达图'
+                        },
+                        radar: {
+                            indicator: [
+                                { name: '温度', max: 150 },
+                                { name: '压强', max: 80 },
+                                { name: '振动', max: 5 }
+                            ]
+                        },
+                        series: [{
+                            type: 'radar',
+                            data: [{
+                                value: [row.temperature, row.pressure, row.vibration],
+                                name: row.equipmentId
+                            }]
+                        }]
+                    });
+                });
+            },
+            showMaintainDialog(row) {
+                this.maintainForm.equipmentId = row.equipmentId;
+                this.maintainDialogVisible = true;
+            },
+            async submitMaintain() {
+                try {
+                    console.log(this.maintainForm);
+                    const response = await axios.post('http://localhost:8081/record/maintain', this.maintainForm, {
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`
+                        }
+                    });
+                    if (response.data.code === 200) {
+                        this.$message.success('维护记录添加成功');
+                        this.maintainDialogVisible = false;
+                        this.maintainForm = {
+                            equipmentId: '',
+                            description: '',
+                            operatorName: ''
+                        };
+                        await this.fetchAlerts();
+                    }
+                } catch (error) {
+                    this.$message.error('添加维护记录失败: ' + error.message);
+                }
             }
         }
     });
@@ -211,15 +424,40 @@
     }
 
     .chart-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
         padding: 20px;
     }
 
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
     .chart-item {
-        border: 1px solid #ebeef5;
-        border-radius: 4px;
         padding: 20px;
+        background-color: #fff;
+        border-radius: 4px;
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+    }
+
+    .el-pagination {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .el-table {
+        margin: 20px 0;
+    }
+
+    .el-date-editor--datetimerange {
+        width: 40%;
+    }
+
+    .alert-container {
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 4px;
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+        overflow-y: auto;
     }
 </style>

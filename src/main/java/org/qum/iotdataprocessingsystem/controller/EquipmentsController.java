@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -88,7 +89,9 @@ public class EquipmentsController {
     public ResponseEntity<ApiResponse<Double>> getRatio(HttpServletRequest request) {
         String role = (String) request.getAttribute("role");
         if(ConstUtil.ADMIN.equals(role)) {
-            return ResponseEntity.ok(ApiResponse.success(1. - (Integer)redisService.getValue("abnormal_total") / 100.));
+            List<String> equipmentIds = redisService.getAllAbnormalDevices();
+            double nums = equipmentIds.size() * 1.0;
+            return ResponseEntity.ok(ApiResponse.success(1. - nums / 100.));
         }
         else if(ConstUtil.USER.equals(role)) {
             // 所在地区
@@ -109,6 +112,27 @@ public class EquipmentsController {
 
             return ResponseEntity.ok(ApiResponse.success(1.0 - ((double) num / (double) total)));
         }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(401, "Invalid credentials"));
+    }
+
+    @GetMapping("/accessibleIds")
+    public ResponseEntity<ApiResponse<List<String>>> getAccessibleSensors(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        String username = (String) request.getAttribute("username");
+
+        if(ConstUtil.ADMIN.equals(role)) {
+            List<String> ret = new ArrayList<>();
+            for(int i = 0; i < 100; ++i) {
+                ret.add("sensor_" + i);
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(ret));
+
+        } else if(ConstUtil.USER.equals(role)) {
+            return ResponseEntity.ok(ApiResponse.success(equipmentService.getSensorByUsername(username)));
+        }
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error(401, "Invalid credentials"));
     }

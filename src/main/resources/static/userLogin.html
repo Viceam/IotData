@@ -58,7 +58,7 @@
                         });
                         localStorage.setItem('auth_token', res.data.data);
                         setTimeout(() => {
-                            window.location.href = "faultyRecord.html";
+                            window.location.href = "home.html";
                         }, 100);
                     } else {
                         this.$message.error('用户名或密码错误');

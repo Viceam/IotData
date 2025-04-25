@@ -28,12 +28,16 @@ public class MaintainRecordController {
     @PostMapping
     public ResponseEntity<ApiResponse<String>> addRecord(@RequestBody MaintainRecord maintainRecord, HttpServletRequest request) {
         String role = (String) request.getAttribute("role");
+        String username = (String) request.getAttribute("username");
         if(!ConstUtil.USER.equals(role)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(401, "Invalid credentials"));
         }
 
         try {
+            maintainRecord.setTime(LocalDateTime.now());
+            maintainRecord.setOperatorName(username);
+//            System.out.println(maintainRecord);
             maintainRecordService.addRecord(maintainRecord);
             String equipmentId = maintainRecord.getEquipmentId();
             redisService.decr("abnormal_total");
